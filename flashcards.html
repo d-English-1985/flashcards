@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英検2級 単語・熟語フラッシュカード</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    background: #1e1e24;
+    background-image: radial-gradient(circle at 20% 10%, #2a2a35 0%, #1a1a20 70%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+  }
+  h1 {
+    color: #ff9a3c;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(255,154,60,0.3);
+  }
+  .subtitle {
+    color: #b0b0b8;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .progress {
+    color: #ffd28a;
+    font-size: 18px;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+  .progress-bar {
+    width: 100%;
+    max-width: 600px;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff9a3c 0%, #6bcb77 100%);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(255,154,60,0.5);
+  }
+  .card-container {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 600px;
+    height: 430px;
+    margin-bottom: 20px;
+  }
+  .card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    cursor: pointer;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: #fafafa;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border: 2px solid rgba(255,154,60,0.2);
+  }
+  .card-back {
+    transform: rotateY(180deg);
+    background: #fff8ee;
+    justify-content: flex-start;
+    padding-top: 35px;
+    overflow-y: auto;
+    border: 2px solid rgba(107,203,119,0.3);
+  }
+  .word {
+    font-size: 42px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+  .phonetic {
+    font-size: 20px;
+    color: #ff9a3c;
+    margin-bottom: 12px;
+    font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', serif;
+    font-weight: 500;
+  }
+  .pos {
+    font-size: 14px;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 20px;
+    background: #f0f0f0;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+  .tap-hint {
+    position: absolute;
+    bottom: 20px;
+    font-size: 13px;
+    color: #aaa;
+  }
+  .meaning {
+    font-size: 28px;
+    color: #d2691e;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .phonetic-back {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 20px;
+    font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', serif;
+  }
+  .example-label {
+    font-size: 13px;
+    color: #6bcb77;
+    margin-bottom: 8px;
+    align-self: flex-start;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .example {
+    font-size: 16px;
+    color: #34495e;
+    line-height: 1.6;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 4px solid #6bcb77;
+    margin-bottom: 12px;
+    text-align: left;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .example-jp {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 0 5px;
+  }
+  .audio-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .audio-btn {
+    background: linear-gradient(135deg, #ff9a3c 0%, #ff7e3c 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(255,154,60,0.4);
+  }
+  .audio-btn:hover { 
+    transform: translateY(-2px) scale(1.03); 
+    box-shadow: 0 6px 16px rgba(255,154,60,0.5);
+  }
+  .audio-btn.example-audio { 
+    background: linear-gradient(135deg, #6bcb77 0%, #4caf50 100%);
+    box-shadow: 0 4px 12px rgba(107,203,119,0.4);
+  }
+  .audio-btn.example-audio:hover {
+    box-shadow: 0 6px 16px rgba(107,203,119,0.5);
+  }
+  .speed-control {
+    background: white;
+    padding: 8px 14px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #555;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-weight: 500;
+  }
+  .speed-control select {
+    border: 2px solid #ff9a3c;
+    border-radius: 15px;
+    padding: 3px 8px;
+    font-size: 13px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    color: #ff7e3c;
+    outline: none;
+  }
+  .nav-controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav-btn {
+    background: white;
+    color: #2c3e50;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+  }
+  .nav-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .shuffle-btn { 
+    background: linear-gradient(135deg, #ff9a3c 0%, #ff6b6b 100%); 
+    color: white; 
+  }
+  .reset-btn { 
+    background: linear-gradient(135deg, #6bcb77 0%, #4caf50 100%); 
+    color: white; 
+  }
+  .word-list-toggle {
+    background: rgba(255,154,60,0.15);
+    color: #ff9a3c;
+    border: 2px solid #ff9a3c;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 15px;
+    transition: all 0.2s;
+  }
+  .word-list-toggle:hover { 
+    background: rgba(255,154,60,0.3);
+    transform: translateY(-1px);
+  }
+  .word-list {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  .word-list.show { display: block; }
+  .word-list-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+    gap: 10px;
+  }
+  .word-list-item:hover { background: #fff8ee; }
+  .word-list-item.current { 
+    background: linear-gradient(90deg, #fff0e0 0%, #f0f9f0 100%); 
+    font-weight: 700; 
+    border-left: 3px solid #ff9a3c;
+  }
+  .word-list-num { color: #ff9a3c; margin-right: 8px; min-width: 28px; font-weight: 700; }
+  .word-list-word { flex: 1; color: #2c3e50; }
+  .word-list-meaning { color: #6bcb77; font-size: 13px; font-weight: 500; }
+  
+  @media (max-width: 480px) {
+    .card-container { height: 480px; }
+    .word { font-size: 32px; }
+    .meaning { font-size: 22px; }
+    .example { font-size: 14px; }
+    .nav-btn { padding: 10px 20px; font-size: 14px; }
+    .phonetic { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+  <h1>英検2級 フラッシュカード</h1>
+  <div class="subtitle">2025年度第2回 大問3-A より重要単語・熟語20選</div>
+  
+  <div class="progress" id="progress">1 / 20</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  
+  <div class="card-container">
+    <div class="card" id="card" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="word" id="word"></div>
+        <div class="phonetic" id="phonetic"></div>
+        <div class="pos" id="pos"></div>
+        <div class="audio-controls" onclick="event.stopPropagation()">
+          <button class="audio-btn" onclick="playWord()">🔊 単語を再生</button>
+          <div class="speed-control">
+            <span>速度</span>
+            <select id="speedSelect" onchange="updateSpeed()">
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1.0" selected>1.0x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+            </select>
+          </div>
+        </div>
+        <div class="tap-hint">👆 タップで意味を表示</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="meaning" id="meaning"></div>
+        <div class="example-label">📖 本文での使用例</div>
+        <div class="example" id="example"></div>
+        <div class="example-jp" id="exampleJp"></div>
+        <div class="audio-controls" onclick="event.stopPropagation()">
+          <button class="audio-btn example-audio" onclick="playExample()">🔊 例文を再生</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="nav-controls">
+    <button class="nav-btn" id="prevBtn" onclick="prevCard()">← 前へ</button>
+    <button class="nav-btn shuffle-btn" onclick="shuffle()">🔀 シャッフル</button>
+    <button class="nav-btn reset-btn" onclick="reset()">🔄 リセット</button>
+    <button class="nav-btn" id="nextBtn" onclick="nextCard()">次へ →</button>
+  </div>
+  
+  <button class="word-list-toggle" onclick="toggleList()">📋 単語一覧を表示</button>
+  
+  <div class="word-list" id="wordList"></div>
+
+<script>
+const cards = [
+  { word: "essential", phonetic: "/ɪˈsenʃəl/", pos: "形容詞 (adjective)", meaning: "必要不可欠な、重要な",
+    example: "Before your first lesson, we'd like to give you some essential information.",
+    exampleJp: "最初のレッスンの前に、必要不可欠な情報をお伝えしたいと思います。" },
+  { word: "marketing", phonetic: "/ˈmɑːrkɪtɪŋ/", pos: "名詞 (noun)", meaning: "マーケティング、販売促進",
+    example: "Thank you for applying for the marketing course.",
+    exampleJp: "マーケティング講座にお申し込みいただきありがとうございます。" },
+  { word: "apply for", phonetic: "/əˈplaɪ fɔːr/", pos: "熟語 (phrase)", meaning: "〜に申し込む、応募する",
+    example: "Thank you for applying for the marketing course.",
+    exampleJp: "マーケティング講座にお申し込みいただきありがとうございます。" },
+  { word: "concept", phonetic: "/ˈkɑːnsept/", pos: "名詞 (noun)", meaning: "概念、考え方",
+    example: "Please watch a fifteen-minute video of basic concepts and practical examples.",
+    exampleJp: "基本的な概念と実例についての15分の動画を視聴してください。" },
+  { word: "practical", phonetic: "/ˈpræktɪkl/", pos: "形容詞 (adjective)", meaning: "実用的な、実践的な",
+    example: "Please watch a fifteen-minute video of basic concepts and practical examples.",
+    exampleJp: "基本的な概念と実用的な例についての15分の動画を視聴してください。" },
+  { word: "quiz", phonetic: "/kwɪz/", pos: "名詞 (noun)", meaning: "小テスト、クイズ",
+    example: "There will be a short quiz to test your understanding.",
+    exampleJp: "理解度を確認するための短い小テストを行います。" },
+  { word: "test your understanding", phonetic: "/test jɔːr ˌʌndərˈstændɪŋ/", pos: "熟語 (phrase)", meaning: "理解度を確かめる",
+    example: "There will be a short quiz to test your understanding.",
+    exampleJp: "あなたの理解度を確かめる短い小テストを行います。" },
+  { word: "slight", phonetic: "/slaɪt/", pos: "形容詞 (adjective)", meaning: "わずかな、少しの",
+    example: "There will be a slight change in the schedule.",
+    exampleJp: "スケジュールにわずかな変更があります。" },
+  { word: "instructor", phonetic: "/ɪnˈstrʌktər/", pos: "名詞 (noun)", meaning: "講師、指導員",
+    example: "The instructor of this course will be away for one week.",
+    exampleJp: "この講座の講師は1週間不在になります。" },
+  { word: "be away", phonetic: "/biː əˈweɪ/", pos: "熟語 (phrase)", meaning: "留守にする、不在である",
+    example: "The instructor of this course will be away for one week to attend an international conference.",
+    exampleJp: "講師は国際会議に出席するため1週間不在になります。" },
+  { word: "attend", phonetic: "/əˈtend/", pos: "動詞 (verb)", meaning: "出席する、参加する",
+    example: "The instructor will be away for one week to attend an international conference.",
+    exampleJp: "講師は国際会議に出席するため1週間不在になります。" },
+  { word: "international conference", phonetic: "/ˌɪntərˈnæʃnəl ˈkɑːnfərəns/", pos: "名詞句 (noun phrase)", meaning: "国際会議",
+    example: "The instructor will be away for one week to attend an international conference.",
+    exampleJp: "講師は国際会議に出席するため1週間不在になります。" },
+  { word: "due to", phonetic: "/djuː tuː/", pos: "熟語 (phrase)", meaning: "〜のために、〜が原因で",
+    example: "Due to this change, the course will end on June 6.",
+    exampleJp: "この変更のため、講座は6月6日に終了します。" },
+  { word: "miss a lesson", phonetic: "/mɪs ə ˈlesn/", pos: "熟語 (phrase)", meaning: "授業を欠席する",
+    example: "If you miss a lesson, we offer a way to catch up.",
+    exampleJp: "授業を欠席した場合、追いつく方法を提供します。" },
+  { word: "offer", phonetic: "/ˈɔːfər/", pos: "動詞 (verb)", meaning: "提供する、申し出る",
+    example: "If you miss a lesson, we offer a way to catch up.",
+    exampleJp: "授業を欠席した場合、追いつく方法を提供します。" },
+  { word: "catch up", phonetic: "/kætʃ ʌp/", pos: "熟語 (phrase)", meaning: "追いつく、遅れを取り戻す",
+    example: "If you miss a lesson, we offer a way to catch up.",
+    exampleJp: "授業を欠席した場合、追いつく方法を提供します。" },
+  { word: "post", phonetic: "/poʊst/", pos: "動詞 (verb)", meaning: "(ネット上に) 投稿する、掲載する",
+    example: "We'll post videos of each lecture on the web.",
+    exampleJp: "各講義の動画をウェブ上に掲載します。" },
+  { word: "allow", phonetic: "/əˈlaʊ/", pos: "動詞 (verb)", meaning: "許可する、〜することを許す",
+    example: "We allow you to take this offer only twice during the course period.",
+    exampleJp: "講座期間中、このサービスの利用は2回までとさせていただきます。" },
+  { word: "discuss", phonetic: "/dɪˈskʌs/", pos: "動詞 (verb)", meaning: "話し合う、議論する",
+    example: "Discussing the materials with your classmates is an important part of this class.",
+    exampleJp: "クラスメートと教材について話し合うことが、この授業の重要な部分です。" },
+  { word: "session", phonetic: "/ˈseʃn/", pos: "名詞 (noun)", meaning: "授業、(活動の) 回、セッション",
+    example: "When you miss three sessions or more, please talk to your manager.",
+    exampleJp: "3回以上欠席する場合は、マネージャーにご相談ください。" }
+];
+
+let currentIndex = 0;
+let speed = 1.0;
+let englishVoice = null;
+
+function initVoices() {
+  const voices = speechSynthesis.getVoices();
+  englishVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) ||
+                 voices.find(v => v.lang === 'en-US') ||
+                 voices.find(v => v.lang === 'en-GB') ||
+                 voices.find(v => v.lang.startsWith('en'));
+}
+if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = initVoices;
+initVoices();
+
+function renderCard() {
+  const card = cards[currentIndex];
+  document.getElementById('word').textContent = card.word;
+  document.getElementById('phonetic').textContent = card.phonetic;
+  document.getElementById('pos').textContent = card.pos;
+  document.getElementById('meaning').textContent = card.meaning;
+  document.getElementById('example').textContent = card.example;
+  document.getElementById('exampleJp').textContent = card.exampleJp;
+  document.getElementById('progress').textContent = `${currentIndex + 1} / ${cards.length}`;
+  document.getElementById('progressFill').style.width = `${((currentIndex + 1) / cards.length) * 100}%`;
+  document.getElementById('card').classList.remove('flipped');
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+  document.getElementById('nextBtn').disabled = currentIndex === cards.length - 1;
+  updateWordList();
+}
+
+function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+function nextCard() { if (currentIndex < cards.length - 1) { currentIndex++; renderCard(); } }
+function prevCard() { if (currentIndex > 0) { currentIndex--; renderCard(); } }
+function updateSpeed() { speed = parseFloat(document.getElementById('speedSelect').value); }
+
+function playWord() {
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(cards[currentIndex].word);
+  utter.lang = 'en-US';
+  utter.rate = speed;
+  if (englishVoice) utter.voice = englishVoice;
+  speechSynthesis.speak(utter);
+}
+
+function playExample() {
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(cards[currentIndex].example);
+  utter.lang = 'en-US';
+  utter.rate = speed;
+  if (englishVoice) utter.voice = englishVoice;
+  speechSynthesis.speak(utter);
+}
+
+function shuffle() {
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  currentIndex = 0;
+  renderCard();
+}
+
+let originalOrder = [];
+function reset() {
+  cards.length = 0;
+  cards.push(...originalOrder.map(c => ({...c})));
+  currentIndex = 0;
+  renderCard();
+}
+
+function toggleList() {
+  document.getElementById('wordList').classList.toggle('show');
+  updateWordList();
+}
+
+function updateWordList() {
+  const list = document.getElementById('wordList');
+  list.innerHTML = cards.map((c, i) => `
+    <div class="word-list-item ${i === currentIndex ? 'current' : ''}" onclick="jumpTo(${i})">
+      <span class="word-list-num">${i + 1}.</span>
+      <span class="word-list-word">${c.word}</span>
+      <span class="word-list-meaning">${c.meaning}</span>
+    </div>
+  `).join('');
+}
+
+function jumpTo(i) { currentIndex = i; renderCard(); }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') nextCard();
+  else if (e.key === 'ArrowLeft') prevCard();
+  else if (e.key === ' ') { e.preventDefault(); flipCard(); }
+});
+
+originalOrder = cards.map(c => ({...c}));
+renderCard();
+</script>
+</body>
+</html>
